@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game 🐍</title>
+
+<style>
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  font-family: Arial;
+}
+
+h1 {
+  margin: 10px;
+}
+
+canvas {
+  background: #111;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #00ffcc;
+}
+
+#score {
+  margin: 10px;
+  font-size: 20px;
+}
+
+/* მობილურის კონტროლები */
+.controls {
+  margin-top: 15px;
+}
+
+button {
+  padding: 15px;
+  margin: 5px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  background: #00ffcc;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐍 Snake Game</h1>
+<div id="score">Score: 0</div>
+<canvas id="game" width="400" height="400"></canvas>
+
+<div class="controls">
+  <div>
+    <button onclick="setDir(0,-1)">⬆️</button>
+  </div>
+  <div>
+    <button onclick="setDir(-1,0)">⬅️</button>
+    <button onclick="setDir(1,0)">➡️</button>
+  </div>
+  <div>
+    <button onclick="setDir(0,1)">⬇️</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let grid = 20;
+let count = 0;
+
+let snake = [{x: 160, y: 160}];
+let dx = grid;
+let dy = 0;
+
+let apple = {
+  x: 320,
+  y: 320
+};
+
+let score = 0;
+let speed = 8;
+
+// ხმები
+const eatSound = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
+const deadSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+
+  if (++count < 60 / speed) return;
+  count = 0;
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+  // კედელზე შეხება
+  if (head.x < 0 || head.y < 0 || head.x >= canvas.width || head.y >= canvas.height) {
+    deadSound.play();
+    alert("Game Over 😢 Score: " + score);
+    location.reload();
+  }
+
+  snake.unshift(head);
+
+  // ვაშლი
+  if (head.x === apple.x && head.y === apple.y) {
+    score++;
+    eatSound.play();
+
+    // level up ⚡
+    if (score % 5 === 0) speed++;
+
+    apple.x = Math.floor(Math.random() * 20) * grid;
+    apple.y = Math.floor(Math.random() * 20) * grid;
+
+  } else {
+    snake.pop();
+  }
+
+  // გველის დახატვა
+  ctx.fillStyle = "#00ffcc";
+  snake.forEach((part, index) => {
+    ctx.beginPath();
+    ctx.roundRect(part.x, part.y, grid-2, grid-2, 6);
+    ctx.fill();
+
+    // თავის glow
+    if (index === 0) {
+      ctx.shadowColor = "#00ffcc";
+      ctx.shadowBlur = 15;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // ვაშლი
+  ctx.fillStyle = "red";
+  ctx.beginPath();
+  ctx.arc(apple.x + 10, apple.y + 10, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // თავის თავზე შეჯახება
+  for (let i = 1; i < snake.length; i++) {
+    if (snake[i].x === head.x && snake[i].y === head.y) {
+      deadSound.play();
+      alert("Game Over 😢 Score: " + score);
+      location.reload();
+    }
+  }
+
+  document.getElementById("score").innerText = "Score: " + score;
+}
+
+// კლავიატურა
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft" && dx === 0) { dx = -grid; dy = 0; }
+  else if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -grid; }
+  else if (e.key === "ArrowRight" && dx === 0) { dx = grid; dy = 0; }
+  else if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = grid; }
+});
+
+// მობილურის კონტროლი
+function setDir(x, y) {
+  if (x !== 0 && dx === 0) {
+    dx = x * grid;
+    dy = 0;
+  }
+  if (y !== 0 && dy === 0) {
+    dy = y * grid;
+    dx = 0;
+  }
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
